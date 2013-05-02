@@ -21,14 +21,14 @@ class Rufus::TrackingScheduler
 
     @scheduler.every(every, @options.merge(options)) do
       start_time = Time.now
-      log("starting job '#{name}'")
+      log("#{name}: starting")
       begin
         block.call
       rescue Exception => exception
-        log("job '#{name}' failed with #{exception.class.name} (#{exception.message})")
+        log("#{name}: failed with #{exception.class.name} (#{exception.message})")
       else
         total_time = Time.now - start_time
-        log("finishing job '#{name}' in %.3f s" % total_time)
+        log("#{name}: completed in %.3f s" % total_time)
       end
     end
     log("scheduled '#{name}'")

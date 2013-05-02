@@ -5,16 +5,17 @@ describe 'rufus-runner' do
   STAMP_FILE = Pathname.new 'tmp/stamp'
 
   shared_examples_for 'killable' do
-    it 'finishes cleanly on SIGINT' do
+    before do
       run_schedule
       wait_for_file STAMP_FILE or raise
+    end
+
+    it 'finishes cleanly on SIGINT' do
       signal_schedule 'INT'
       wait_schedule.should == 0
     end
 
     it 'finishes cleanly on SIGTERM' do
-      run_schedule
-      wait_for_file STAMP_FILE or raise
       signal_schedule 'TERM'
       wait_schedule.should == 0
     end
@@ -70,9 +71,13 @@ describe 'rufus-runner' do
       create_schedule %Q{
         Pathname.timestamp('#{STAMP_FILE}')
 
-        Rufus::TrackingScheduler.start(:timeout => 10) do |scheduler|
+        Rufus::TrackingScheduler.start(:timeout => 4) do |scheduler|
           scheduler.run :name => 'job_1', :every => '1s' do
             Pathname.timestamp('#{stamp_job_1}')
+          end
+
+          scheduler.run :name => 'job_4', :every => '1s' do
+            raise RuntimeError, 'fubar'
           end
 
           scheduler.run :name => 'job_2', :every => '1s' do
@@ -132,8 +137,17 @@ describe 'rufus-runner' do
         wait_for_file(stamp_job_3).should be_false
       end
 
-      xit 'logs jobs starting and ending'
-      xit 'logs jobs failing'
+      it 'logs jobs starting and ending' do
+        wait_for_file(stamp_job_2)
+        scheduler_output.should =~ /job_1.*starting/
+        scheduler_output.should =~ /job_1.*completed/
+      end
+
+      it 'logs jobs failing' do
+        wait_for_file(stamp_job_2)
+        scheduler_output.should =~ /job_4.*starting/
+        scheduler_output.should =~ /job_4.*failed/
+      end
     end
   end
 end

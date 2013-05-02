@@ -7,8 +7,7 @@
 
 module ScheduleHelper
   TEST_SCHEDULE = Pathname.new('tmp/schedule.rb')
-  CHILD_STDOUT  = Pathname.new('tmp/stdout')
-  CHILD_STDERR  = Pathname.new('tmp/stderr')
+  CHILD_OUTPUT  = Pathname.new('tmp/stdout')
 
   def create_schedule(string)
     TEST_SCHEDULE.open('w') do |io|
@@ -22,12 +21,15 @@ module ScheduleHelper
 
   def run_schedule
     raise 'already started' if @schedule_pid
+    CHILD_OUTPUT.delete_if_exist
+
     @schedule_pid = fork do
+      STDOUT.reopen CHILD_OUTPUT.open('a')
+      STDERR.reopen CHILD_OUTPUT.open('a')
+
       if TEST_SCHEDULE.exist?
-        # exec "bin/rufus-runner #{TEST_SCHEDULE} > #{CHILD_STDOUT} 2> #{CHILD_STDERR}"
         exec "bin/rufus-runner #{TEST_SCHEDULE}"
       else
-        # exec "bin/rufus-runner #{CHILD_STDOUT} 2> #{CHILD_STDERR}"
         exec "bin/rufus-runner"
       end
     end
@@ -52,6 +54,10 @@ module ScheduleHelper
     Process.kill('KILL', @schedule_pid)
     Process.wait(@schedule_pid)
     @schedule_pid = nil
+  end
+
+  def scheduler_output
+    CHILD_OUTPUT.read
   end
 end
 
