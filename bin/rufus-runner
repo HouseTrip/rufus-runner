@@ -1,0 +1,18 @@
+#!/usr/bin/env ruby
+#
+# Driver for Rufus-scheduler.
+# Pass it a schedule file as a command-line argument
+#
+$PROGRAM_NAME = 'rufus'
+
+require 'rubygems'
+require 'pathname'
+require 'bundler/setup'
+require 'rufus-runner'
+
+if ARGV.empty?
+  puts 'Sorry, but I need a schedule. Pass it to me as the first command-line argument.'
+  Process.exit! 1
+end
+
+require ARGV[0]
