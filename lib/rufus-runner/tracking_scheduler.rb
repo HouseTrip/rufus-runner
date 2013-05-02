@@ -19,16 +19,21 @@ class Rufus::TrackingScheduler
     name  = options.delete(:name) || 'noname'
     every = options.delete(:every)
 
-    @scheduler.every(every, @options.merge(options)) do
+    @scheduler.every(every, @options.merge(options)) do |job|
+      job_id = '%08x' % job.job_id.gsub(/\D/,'')
       start_time = Time.now
-      log("#{name}: starting")
+      log("#{name}(#{job_id}): starting")
       begin
         block.call
       rescue Exception => exception
-        log("#{name}: failed with #{exception.class.name} (#{exception.message})")
+        log("#{name}(#{job_id}): failed with #{exception.class.name} (#{exception.message})")
       else
         total_time = Time.now - start_time
-        log("#{name}: completed in %.3f s" % total_time)
+        log("#{name}(#{job_id}): completed in %.3f s" % total_time)
+      end
+
+      if defined?(ActiveRecord::Base)
+        ActiveRecord::Base.clear_active_connections!
       end
     end
     log("scheduled '#{name}'")

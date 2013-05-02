@@ -50,6 +50,7 @@ scheduler. Simply add on top of your schedule:
     # Rails 3
     require 'config/application'
 
+When Rails is present, `rufus-runner` will call `ActiveRecord::Base.clear_active_connections!` after each job for you.
 
 ## Contributing
 
