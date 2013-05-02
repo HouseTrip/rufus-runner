@@ -26,7 +26,17 @@ Gem::Specification.new do |gem|
   gem.add_development_dependency 'pry'
   gem.add_development_dependency 'pry-nav'
 
-  gem.files         = `git ls-files`.split($/)
+  gem.files = %w(
+    LICENSE.txt
+    README.md
+    bin/rufus-runner
+    lib/pathname_ext/delete_if_exist.rb
+    lib/pathname_ext/timestamp.rb
+    lib/rufus-runner.rb
+    lib/rufus-runner/tracking_scheduler.rb
+    lib/rufus-runner/version.rb
+    rufus-runner.gemspec
+  )
   gem.executables   = gem.files.grep(%r{^bin/}).map{ |f| File.basename(f) }
   gem.test_files    = gem.files.grep(%r{^spec/})
   gem.require_paths = ["lib"]
