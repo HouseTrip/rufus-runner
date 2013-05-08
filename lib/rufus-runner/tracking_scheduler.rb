@@ -65,25 +65,25 @@ class Rufus::TrackingScheduler
       job.unschedule
     end
     log "all jobs unscheduled"
-    if running_jobs == 0
+    if running_jobs_count == 0
       log "no more jobs running"
       return
     end
 
-    log "waiting for #{running_jobs} still running jobs"
+    log "waiting for #{running_jobs_count} still running jobs"
     start_time = Time.now
-    while (Time.now <= start_time + GRACE_DELAY) && (running_jobs > 0)
+    while (Time.now <= start_time + GRACE_DELAY) && (running_jobs_count > 0)
       Kernel.sleep(100e-3)
     end
 
-    if running_jobs > 0
-      log "#{running_jobs} jobs did not complete"
+    if running_jobs_count > 0
+      log "#{running_jobs_count} jobs did not complete"
     else
       log "all jobs completed"
     end
   end
 
-  def running_jobs
+  def running_jobs_count
     @scheduler.running_jobs.length
   end
 

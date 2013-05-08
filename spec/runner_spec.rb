@@ -22,7 +22,7 @@ describe 'rufus-runner' do
   end
 
 
-  context 'without a schedule' do
+  context '(without a schedule)' do
     it 'exits with error' do
       raise 'this should not happen' if ScheduleHelper::TEST_SCHEDULE.exist?
       run_schedule
@@ -30,7 +30,7 @@ describe 'rufus-runner' do
     end
   end
 
-  context 'with a bad schedule' do
+  context '(with a bad schedule)' do
     before do
       create_schedule %Q{
         this is English, not ruby
@@ -43,7 +43,7 @@ describe 'rufus-runner' do
     end
   end
 
-  context 'with an empty schedule' do
+  context '(with an empty schedule)' do
     before do
       create_schedule %Q{
         Pathname.timestamp('#{STAMP_FILE}')
@@ -62,7 +62,7 @@ describe 'rufus-runner' do
     it_should_behave_like 'killable'
   end
 
-  context 'with simple jobs' do
+  context '(with simple jobs)' do
     let(:stamp_job_1) { Pathname.new('tmp/stamp1') }
     let(:stamp_job_2) { Pathname.new('tmp/stamp2') }
     let(:stamp_job_3) { Pathname.new('tmp/stamp3') }
@@ -103,7 +103,7 @@ describe 'rufus-runner' do
 
     it_should_behave_like 'killable'
 
-    context do
+    context '(considering job order)' do
       before do
         run_schedule
         wait_for_file STAMP_FILE or raise
@@ -124,14 +124,14 @@ describe 'rufus-runner' do
       end
 
       it 'does not run jobs in parallel' do
-        wait_for_file(stamp_job_2).should be_true # XXX remove expectation here
+        wait_for_file(stamp_job_2)
         stamp_job_1.delete
         Kernel.sleep 1
         stamp_job_1.should_not exist
       end
 
       it 'kills long-running jobs' do
-        wait_for_file(stamp_job_3).should be_true # XXX remove expectation here
+        wait_for_file(stamp_job_3)
         stamp_job_3.delete
         signal_schedule 'TERM'
         wait_for_file(stamp_job_3).should be_false
