@@ -4,6 +4,18 @@ require 'rufus-runner'
 describe 'rufus-runner' do
   STAMP_FILE = Pathname.new 'tmp/stamp'
 
+  CREATE_STAMP_WHEN_EM_STARTED = <<-RUBY
+    # drop a timestamp as soon as EventMachine has started
+    # this lets us detect when we can start testing signals, for instance
+    EventMachine.add_timer(1e-3) do
+      Pathname.timestamp('#{STAMP_FILE}')
+    end
+  RUBY
+
+  after do
+    STAMP_FILE.delete_if_exist
+  end
+
   shared_examples_for 'killable' do
     before do
       run_schedule
@@ -46,9 +58,8 @@ describe 'rufus-runner' do
   context '(with an empty schedule)' do
     before do
       create_schedule <<-RUBY
-        Pathname.timestamp('#{STAMP_FILE}')
-
         Rufus::TrackingScheduler.start do |scheduler|
+          #{CREATE_STAMP_WHEN_EM_STARTED}
         end
       RUBY
     end
@@ -69,8 +80,6 @@ describe 'rufus-runner' do
 
     before do
       create_schedule <<-RUBY
-        Pathname.timestamp('#{STAMP_FILE}')
-
         Rufus::TrackingScheduler.start(:timeout => 4) do |scheduler|
           scheduler.run :name => 'job_1', :every => '1s' do
             Pathname.timestamp('#{stamp_job_1}')
@@ -91,6 +100,8 @@ describe 'rufus-runner' do
             Kernel.sleep 60
             Pathname.timestamp('#{stamp_job_3}')
           end
+
+          #{CREATE_STAMP_WHEN_EM_STARTED}
         end
       RUBY
     end

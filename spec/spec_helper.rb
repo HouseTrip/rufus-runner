@@ -33,8 +33,6 @@ module ScheduleHelper
         exec "bin/rufus-runner"
       end
     end
-    sleep 1.0 # give the process time to start
-              # this should wait for a file instead...
   end
 
   def signal_schedule(signal)
