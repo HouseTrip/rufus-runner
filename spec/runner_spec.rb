@@ -32,9 +32,9 @@ describe 'rufus-runner' do
 
   context '(with a bad schedule)' do
     before do
-      create_schedule %Q{
+      create_schedule <<-RUBY
         this is English, not ruby
-      }
+      RUBY
     end
 
     it 'exits with error' do
@@ -45,12 +45,12 @@ describe 'rufus-runner' do
 
   context '(with an empty schedule)' do
     before do
-      create_schedule %Q{
+      create_schedule <<-RUBY
         Pathname.timestamp('#{STAMP_FILE}')
 
         Rufus::TrackingScheduler.start do |scheduler|
         end
-      }
+      RUBY
     end
 
     it 'starts' do
@@ -68,7 +68,7 @@ describe 'rufus-runner' do
     let(:stamp_job_3) { Pathname.new('tmp/stamp3') }
 
     before do
-      create_schedule %Q{
+      create_schedule <<-RUBY
         Pathname.timestamp('#{STAMP_FILE}')
 
         Rufus::TrackingScheduler.start(:timeout => 4) do |scheduler|
@@ -92,7 +92,7 @@ describe 'rufus-runner' do
             Pathname.timestamp('#{stamp_job_3}')
           end
         end
-      }
+      RUBY
     end
 
     after do
