@@ -29,16 +29,16 @@ class Rufus::TrackingScheduler
         log("#{name}(#{job_id}): failed with #{exception.class.name} (#{exception.message})")
       rescue ActiveRecord::ConnectionTimeoutError => exception
         log("#{name}(#{job_id}): timed out with #{exception.class.name} (#{exception.message})")
-        ActiveRecord::Base.connection.close
-        exit 0
       else
         total_time = Time.now - start_time
         log("#{name}(#{job_id}): completed in %.3f s" % total_time)
+      ensure
+        if defined?(ActiveRecord::Base)
+          ActiveRecord::Base.clear_active_connections!
+        end
+        exit 0
       end
 
-      if defined?(ActiveRecord::Base)
-        ActiveRecord::Base.clear_active_connections!
-      end
     end
     log("scheduled '#{name}'")
     nil
