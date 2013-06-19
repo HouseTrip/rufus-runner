@@ -19,6 +19,8 @@ class Rufus::TrackingScheduler
     name  = options.delete(:name) || 'noname'
     every = options.delete(:every)
 
+    return unless rails_environment_matches?(options.delete(:environments))
+
     @scheduler.every(every, @options.merge(options)) do |job|
       job_id = '%08x' % job.job_id.gsub(/\D/,'')
       start_time = Time.now
@@ -94,6 +96,15 @@ class Rufus::TrackingScheduler
 
   def format_time(time)
     "%s.%03d" % [time.strftime('%F %T'), ((time.to_f - time.to_i) * 1e3).to_i]
+  end
+
+  def rails_environment_matches?(environments)
+    return true unless ENV['RAILS_ENV']
+    return true if environments.nil?
+
+    Array(environments).any? do |environment|
+      environment === ENV['RAILS_ENV']
+    end
   end
 
   DefaultOptions = {
