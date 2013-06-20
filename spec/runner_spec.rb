@@ -161,6 +161,33 @@ describe 'rufus-runner' do
       end
     end
   end
+
+  describe '#run' do
+
+    subject do
+      Class.new(Rufus::TrackingScheduler) do
+        attr_reader :scheduler
+        def log(string)
+        end
+      end.new
+    end
+
+    it 'delegates to scheduler.every if the :every option is given' do
+      subject.scheduler.should_receive(:every).with('period', anything)
+      subject.run(:every => 'period')
+    end
+
+    it 'delegates to scheduler.cron if the :cron option is given' do
+      subject.scheduler.should_receive(:cron).with('c r o n * *', anything)
+      subject.run(:cron => 'c r o n * *')
+    end
+
+    it 'raises an ArgumentError if neither :every nor :cron is given' do
+      proc do
+        subject.run
+      end.should raise_error(ArgumentError)
+    end
+  end
 end
 
 

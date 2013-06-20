@@ -17,9 +17,15 @@ class Rufus::TrackingScheduler
 
   def run(options={}, &block)
     name  = options.delete(:name) || 'noname'
-    every = options.delete(:every)
+    if frequency = options.delete(:every)
+      scheduling_method = :every
+    elsif frequency = options.delete(:cron)
+      scheduling_method = :cron
+    else
+      raise ArgumentError.new('You need to specify either :every or :cron')
+    end
 
-    @scheduler.every(every, @options.merge(options)) do |job|
+    @scheduler.send(scheduling_method, frequency, @options.merge(options)) do |job|
       job_id = '%08x' % job.job_id.gsub(/\D/,'')
       start_time = Time.now
       log("#{name}(#{job_id}): starting")
