@@ -162,6 +162,98 @@ describe 'rufus-runner' do
     end
   end
 
+  context '(with jobs running only in some environments)' do
+    let(:stamp_job_1) { Pathname.new('tmp/stamp1') }
+    let(:stamp_job_2) { Pathname.new('tmp/stamp2') }
+    let(:stamp_job_3) { Pathname.new('tmp/stamp3') }
+    let(:stamp_job_4) { Pathname.new('tmp/stamp4') }
+    let(:stamp_job_5) { Pathname.new('tmp/stamp5') }
+
+    before do
+      create_schedule <<-RUBY
+        Rufus::TrackingScheduler.start(:timeout => 4) do |scheduler|
+          scheduler.run :name => 'job_1', :every => '1s' do
+            Pathname.timestamp('#{stamp_job_1}')
+          end
+
+          scheduler.run :name => 'job_2', :every => '1s', :environments => /some_environment/ do
+            Pathname.timestamp('#{stamp_job_2}')
+          end
+
+          scheduler.run :name => 'job_3', :every => '1s', :environments => /some_other_environment/ do
+            Pathname.timestamp('#{stamp_job_3}')
+          end
+
+          scheduler.run :name => 'job_4', :every => '1s', :environments => ["some_other_environment", "some_environment"] do
+            Pathname.timestamp('#{stamp_job_4}')
+          end
+
+          scheduler.run :name => 'job_5', :every => '1s', :environments => ["some_other_environment", /some_other_environment/] do
+            Pathname.timestamp('#{stamp_job_5}')
+          end
+
+          #{CREATE_STAMP_WHEN_EM_STARTED}
+        end
+      RUBY
+    end
+
+    after do
+      stamp_job_1.delete_if_exist
+      stamp_job_2.delete_if_exist
+      stamp_job_3.delete_if_exist
+      stamp_job_4.delete_if_exist
+      stamp_job_5.delete_if_exist
+    end
+
+
+    def with_environment(env, &block)
+      begin
+        old_env = ENV['RAILS_ENV']
+        ENV['RAILS_ENV'] = env
+        yield
+      ensure
+        ENV['RAILS_ENV'] = old_env
+      end
+    end
+
+    context "(with no rails environment)" do
+      around do |example|
+        with_environment(nil) { example.run }
+      end
+
+      it 'runs all the jobs' do
+        run_schedule
+        wait_for_file STAMP_FILE or raise
+        wait_for_file(stamp_job_1).should be_true
+        wait_for_file(stamp_job_2).should be_true
+        wait_for_file(stamp_job_3).should be_true
+        wait_for_file(stamp_job_4).should be_true
+        wait_for_file(stamp_job_5).should be_true
+      end
+    end
+
+    context "(with environment 'some_environment')" do
+      around do |example|
+        with_environment('some_environment') { example.run }
+      end
+
+      it 'runs the generic job, and the jobs that mentions this environment' do
+        run_schedule
+        wait_for_file STAMP_FILE or raise
+        wait_for_file(stamp_job_1).should be_true
+        wait_for_file(stamp_job_2).should be_true
+        wait_for_file(stamp_job_4).should be_true
+      end
+
+      it 'does not run the jobs not mentioning this environment' do
+        run_schedule
+        wait_for_file STAMP_FILE or raise
+        wait_for_file(stamp_job_3).should be_false
+        wait_for_file(stamp_job_5).should be_false
+      end
+    end
+  end
+
   describe '#run' do
 
     subject do

@@ -16,6 +16,8 @@ class Rufus::TrackingScheduler
   end
 
   def run(options={}, &block)
+    return unless rails_environment_matches?(options.delete(:environments))
+
     name  = options.delete(:name) || 'noname'
     if frequency = options.delete(:every)
       scheduling_method = :every
@@ -105,6 +107,24 @@ class Rufus::TrackingScheduler
 
   def format_time(time)
     "%s.%03d" % [time.strftime('%F %T'), ((time.to_f - time.to_i) * 1e3).to_i]
+  end
+
+  def rails_environment_matches?(environments)
+    return true unless rails_environment
+    return true if environments.nil?
+
+    Array(environments).any? do |environment|
+      # environment can be a string or a regexp
+      environment === rails_environment
+    end
+  end
+
+  def rails_environment
+    if defined?(Rails)
+      Rails.env
+    else
+      ENV['RAILS_ENV'] || ENV['RACK_ENV']
+    end
   end
 
   DefaultOptions = {
