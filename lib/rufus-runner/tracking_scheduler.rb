@@ -99,11 +99,20 @@ class Rufus::TrackingScheduler
   end
 
   def rails_environment_matches?(environments)
-    return true unless ENV['RAILS_ENV']
+    return true unless rails_environment
     return true if environments.nil?
 
     Array(environments).any? do |environment|
-      environment === ENV['RAILS_ENV']
+      # environment can be a string or a regexp
+      environment === rails_environment
+    end
+  end
+
+  def rails_environment
+    if defined?(Rails)
+      Rails.env
+    else
+      ENV['RAILS_ENV'] || ENV['RACK_ENV']
     end
   end
 
