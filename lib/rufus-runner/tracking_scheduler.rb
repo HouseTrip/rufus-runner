@@ -1,10 +1,10 @@
 require 'rufus/scheduler'
 require 'eventmachine'
 
-# 
+#
 # Wraps Rufus's scheduler class with signal handling,
 # cancellation of jobs, and logging.
-# 
+#
 class Rufus::TrackingScheduler
   # wait that long for jobs to complete before quitting (seconds)
   GRACE_DELAY = 10
@@ -16,24 +16,35 @@ class Rufus::TrackingScheduler
   end
 
   def run(options={}, &block)
-    name  = options.delete(:name) || 'noname'
-    every = options.delete(:every)
-
     return unless rails_environment_matches?(options.delete(:environments))
 
-    @scheduler.every(every, @options.merge(options)) do |job|
+    name  = options.delete(:name) || 'noname'
+    if frequency = options.delete(:every)
+      scheduling_method = :every
+    elsif frequency = options.delete(:cron)
+      scheduling_method = :cron
+    else
+      raise ArgumentError.new('You need to specify either :every or :cron')
+    end
+
+    @scheduler.send(scheduling_method, frequency, @options.merge(options)) do |job|
       job_id = '%08x' % job.job_id.gsub(/\D/,'')
       start_time = Time.now
       log("#{name}(#{job_id}): starting")
+
       begin
         block.call
       rescue Exception => exception
         log("#{name}(#{job_id}): failed with #{exception.class.name} (#{exception.message})")
+        if exception.kind_of? ActiveRecord::ConnectionTimeoutError
+          log("connection broken, exiting scheduler")
+          exit 0
+        end
       else
         total_time = Time.now - start_time
         log("#{name}(#{job_id}): completed in %.3f s" % total_time)
       end
-
+      
       if defined?(ActiveRecord::Base)
         ActiveRecord::Base.clear_active_connections!
       end
@@ -56,7 +67,7 @@ class Rufus::TrackingScheduler
     %w(INT TERM).each do |signal|
       Signal.trap(signal) do
         log "SIG#{signal} received"
-        stop_all_jobs    
+        stop_all_jobs
         EM.stop_event_loop
       end
     end
