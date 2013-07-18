@@ -17,17 +17,9 @@ class Rufus::TrackingScheduler
 
   def run(options={}, &block)
     return unless rails_environment_matches?(options.delete(:environments))
-
     name  = options.delete(:name) || 'noname'
-    if frequency = options.delete(:every)
-      scheduling_method = :every
-    elsif frequency = options.delete(:cron)
-      scheduling_method = :cron
-    else
-      raise ArgumentError.new('You need to specify either :every or :cron')
-    end
 
-    @scheduler.send(scheduling_method, frequency, @options.merge(options)) do |job|
+    schedule(options) do |job|
       job_id = '%08x' % job.job_id.gsub(/\D/,'')
       start_time = Time.now
       log("#{name}(#{job_id}): starting")
@@ -62,6 +54,18 @@ class Rufus::TrackingScheduler
   end
 
   private
+
+  def schedule(options, &block)
+    if frequency = options.delete(:every)
+      scheduling_method = :every
+    elsif frequency = options.delete(:cron)
+      scheduling_method = :cron
+    else
+      raise ArgumentError.new('You need to specify either :every or :cron')
+    end
+
+    @scheduler.send(scheduling_method, frequency, @options.merge(options), &block)
+  end
 
   def setup_traps
     %w(INT TERM).each do |signal|
