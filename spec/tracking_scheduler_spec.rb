@@ -1,7 +1,6 @@
 require 'spec_helper'
-require 'rufus-runner'
 
-describe 'rufus-runner' do
+describe Rufus::TrackingScheduler do
   STAMP_FILE = Pathname.new 'tmp/stamp'
 
   CREATE_STAMP_WHEN_EM_STARTED = <<-RUBY

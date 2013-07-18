@@ -1,5 +1,9 @@
+class Rufus::TrackingScheduler
+end
+
 require 'rufus/scheduler'
 require 'eventmachine'
+require 'rufus-runner/tracking_scheduler/job_runner'
 
 #
 # Wraps Rufus's scheduler class with signal handling,
@@ -20,27 +24,15 @@ class Rufus::TrackingScheduler
     name  = options.delete(:name) || 'noname'
 
     schedule(options) do |job|
-      job_id = '%08x' % job.job_id.gsub(/\D/,'')
-      start_time = Time.now
-      log("#{name}(#{job_id}): starting")
-
-      begin
-        block.call
-      rescue Exception => exception
-        log("#{name}(#{job_id}): failed with #{exception.class.name} (#{exception.message})")
-        if exception.kind_of? ActiveRecord::ConnectionTimeoutError
-          log("connection broken, exiting scheduler")
-          exit 0
-        end
-      else
-        total_time = Time.now - start_time
-        log("#{name}(#{job_id}): completed in %.3f s" % total_time)
-      end
-      
-      if defined?(ActiveRecord::Base)
-        ActiveRecord::Base.clear_active_connections!
-      end
+      job_runner = JobRunner.new(
+        :name => name,
+        :job => job,
+        :block => block,
+        :logger => self
+      )
+      job_runner.run
     end
+
     log("scheduled '#{name}'")
     nil
   end
@@ -51,6 +43,11 @@ class Rufus::TrackingScheduler
       scheduler.send :setup_traps
       yield scheduler
     end
+  end
+
+  def log(string)
+    $stdout.puts "[#{$PROGRAM_NAME} #{format_time Time.now}] #{string}"
+    $stdout.flush
   end
 
   private
@@ -102,11 +99,6 @@ class Rufus::TrackingScheduler
 
   def running_jobs_count
     @scheduler.running_jobs.length
-  end
-
-  def log(string)
-    $stdout.puts "[#{$PROGRAM_NAME} #{format_time Time.now}] #{string}"
-    $stdout.flush
   end
 
   def format_time(time)

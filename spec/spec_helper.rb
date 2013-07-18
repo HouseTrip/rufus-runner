@@ -5,6 +5,8 @@
 #
 # See http://rubydoc.info/gems/rspec-core/RSpec/Core/Configuration
 
+require 'rufus-runner'
+
 module ScheduleHelper
   TEST_SCHEDULE = Pathname.new('tmp/schedule.rb')
   CHILD_OUTPUT  = Pathname.new('tmp/stdout')
