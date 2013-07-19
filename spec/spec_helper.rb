@@ -6,6 +6,7 @@
 # See http://rubydoc.info/gems/rspec-core/RSpec/Core/Configuration
 
 require 'rufus-runner'
+require 'spec/support'
 
 module ScheduleHelper
   TEST_SCHEDULE = Pathname.new('tmp/schedule.rb')
@@ -13,6 +14,7 @@ module ScheduleHelper
 
   def create_schedule(string)
     TEST_SCHEDULE.open('w') do |io|
+      io.puts 'require "spec/support"'
       io.write string
     end
   end

@@ -31,8 +31,6 @@ Gem::Specification.new do |gem|
     LICENSE.txt
     README.md
     bin/rufus-runner
-    lib/pathname_ext/delete_if_exist.rb
-    lib/pathname_ext/timestamp.rb
     lib/rufus-runner.rb
     lib/rufus-runner/tracking_scheduler.rb
     lib/rufus-runner/version.rb
