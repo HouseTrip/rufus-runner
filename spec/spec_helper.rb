@@ -53,7 +53,8 @@ module ScheduleHelper
 
   def end_schedule
     return unless @schedule_pid
-    Process.kill('KILL', @schedule_pid)
+    # dont send KILL, otherwise the child processes will survive
+    Process.kill('TERM', @schedule_pid)
     Process.wait(@schedule_pid)
     @schedule_pid = nil
   end
@@ -82,6 +83,15 @@ module FileExpectationsHelper
   end
 end
 
+module ProcessHelper
+  def process_running?(pid)
+    status = Process.getpgid(pid)
+    true
+  rescue Errno::ESRCH
+    false
+  end
+end
+
 
 RSpec.configure do |config|
   config.treat_symbols_as_metadata_keys_with_true_values = true
@@ -96,6 +106,7 @@ RSpec.configure do |config|
 
   config.include ScheduleHelper
   config.include FileExpectationsHelper
+  config.include ProcessHelper
 
   config.after(:each) { end_schedule }
   config.after(:each) { remove_schedule }

@@ -1,13 +1,19 @@
+class Rufus::Scheduler::Job
+  attr_accessor :job_runner
+end
+
 class Rufus::TrackingScheduler::JobRunner
 
   def initialize(options)
     @name = options.fetch(:name)
     @job = options.fetch(:job)
     @block = options.fetch(:block)
-    @logger = options.fetch(:logger)
+    @scheduler = options.fetch(:scheduler)
   end
 
   def run
+    return if @scheduler.shutting_down?
+    @job.job_runner = self
     start_time = Time.now
     log("starting")
 
@@ -29,6 +35,9 @@ class Rufus::TrackingScheduler::JobRunner
     end
   end
 
+  def shutdown
+    # nothing to do, threads will die automatically
+  end
 
   private
 
@@ -41,7 +50,7 @@ class Rufus::TrackingScheduler::JobRunner
   end
 
   def log(message)
-    @logger.log("#{@name}(#{job_id}): #{message}")
+    @scheduler.log("#{@name}(#{job_id}): #{message}")
   end
 
 end

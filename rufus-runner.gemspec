@@ -14,7 +14,7 @@ Gem::Specification.new do |gem|
   gem.homepage      = "http://github.com/mezis/rufus-runner"
 
   gem.add_runtime_dependency 'eventmachine'
-  gem.add_runtime_dependency 'rufus-scheduler', '~> 2'
+  gem.add_runtime_dependency 'rufus-scheduler', '>= 2.0.22'
 
   gem.add_development_dependency 'rake'
   gem.add_development_dependency 'rspec', '~> 2'
@@ -33,6 +33,8 @@ Gem::Specification.new do |gem|
     bin/rufus-runner
     lib/rufus-runner.rb
     lib/rufus-runner/tracking_scheduler.rb
+    lib/rufus-runner/tracking_scheduler/job_runner.rb
+    lib/rufus-runner/tracking_scheduler/forking_job_runner.rb
     lib/rufus-runner/version.rb
     rufus-runner.gemspec
   )
