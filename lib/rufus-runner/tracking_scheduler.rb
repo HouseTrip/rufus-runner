@@ -31,7 +31,7 @@ class Rufus::TrackingScheduler
     when :process
       job_runner_class = ForkingJobRunner
     else
-      fail ArgumentError.new("options :fork needs to be either :thread or :process")
+      fail ArgumentError.new("option :fork needs to be either :thread or :process")
     end
 
     schedule(options) do |job|
