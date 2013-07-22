@@ -36,13 +36,13 @@ class Rufus::TrackingScheduler::JobRunner
   end
 
   def shutdown
-    # nothing to do, threads will die automatically
+    raise NotImplementedError.new
   end
 
   private
 
   def run_block
-    @block.call
+    raise NotImplementedError.new
   end
 
   def job_id

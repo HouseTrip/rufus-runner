@@ -16,7 +16,7 @@ unless defined?(ActiveRecord::ConnectionTimeoutError)
 end
 
 
-describe Rufus::TrackingScheduler::JobRunner do
+describe Rufus::TrackingScheduler::ThreadingJobRunner do
 
   let(:name) { "some job" }
   let(:job) { double('job', :job_id => '1234', :job_runner= => nil) }

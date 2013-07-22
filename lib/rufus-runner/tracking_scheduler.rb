@@ -3,7 +3,7 @@ end
 
 require 'rufus/scheduler'
 require 'eventmachine'
-require 'rufus-runner/tracking_scheduler/job_runner'
+require 'rufus-runner/tracking_scheduler/threading_job_runner'
 require 'rufus-runner/tracking_scheduler/forking_job_runner'
 
 #
@@ -27,7 +27,7 @@ class Rufus::TrackingScheduler
     name = options.delete(:name) || 'noname'
     case options.delete(:fork) || :thread
     when :thread
-      job_runner_class = JobRunner
+      job_runner_class = ThreadingJobRunner
     when :process
       job_runner_class = ForkingJobRunner
     else
