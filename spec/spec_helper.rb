@@ -116,7 +116,7 @@ module ProcessHelper
 
   def wait_for_child_processes
     loop do
-      Process.wait(-1)
+      Process.wait(-1) # wait for any child
     end
   rescue Errno::ECHILD
   end

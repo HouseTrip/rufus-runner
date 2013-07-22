@@ -31,11 +31,21 @@ class Rufus::LockingIODecorator < SimpleDelegator
     super
   end
 
-  %w(write puts print).each do |method|
-    define_method method do |*args|
-      @guard.sync do
-        __getobj__.send(method, *args)
-      end
+  def write(*args)
+    @guard.sync do
+      __getobj__.write(*args)
+    end
+  end
+
+  def puts(*args)
+    @guard.sync do
+      __getobj__.puts(*args)
+    end
+  end
+
+  def print(*args)
+    @guard.sync do
+      __getobj__.print(*args)
     end
   end
 
