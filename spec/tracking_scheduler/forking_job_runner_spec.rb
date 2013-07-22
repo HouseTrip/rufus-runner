@@ -30,16 +30,11 @@ describe Rufus::TrackingScheduler::ForkingJobRunner do
   end
 
   def run_and_return(&block)
-    reader, writer = IO.pipe
-    run do
-      reader.close
-      writer.print(Marshal.dump(block.call)) rescue nil
-      writer.close
+    get_from_other_process do |pipe|
+      run do
+        pipe.return(block.call)
+      end
     end
-    writer.close
-    result = Marshal.load(reader.read_nonblock(1000)) rescue nil
-    reader.close
-    result
   end
 
   def have_child_processes_finished?
@@ -67,6 +62,7 @@ describe Rufus::TrackingScheduler::ForkingJobRunner do
     end
 
     it 'waits for the process to end' do
+      wait_for_child_processes # possibly left over from earlier tests
       run { sleep 0.1 }
       have_child_processes_finished?.should be_true
     end
@@ -102,6 +98,7 @@ describe Rufus::TrackingScheduler::ForkingJobRunner do
       end
 
       it 'kills the child process' do
+        wait_for_child_processes # possibly left over from earlier tests
         run_and_timeout(0.1) do
           sleep 2
         end

@@ -84,11 +84,41 @@ module FileExpectationsHelper
 end
 
 module ProcessHelper
+  class CrossProcessReturn
+    def initialize
+      @reader, @writer = IO.pipe
+    end
+
+    def capture
+      yield(self)
+      @writer.close
+      result = Marshal.load(@reader.read) rescue nil
+      @reader.close
+      result
+    end
+
+    def return(value)
+      @writer.print(Marshal.dump(value)) rescue nil
+      @writer.close
+    end
+  end
+
+  def get_from_other_process(&block)
+    CrossProcessReturn.new.capture(&block)
+  end
+
   def process_running?(pid)
     status = Process.getpgid(pid)
     true
   rescue Errno::ESRCH
     false
+  end
+
+  def wait_for_child_processes
+    loop do
+      Process.wait(-1)
+    end
+  rescue Errno::ECHILD
   end
 end
 
