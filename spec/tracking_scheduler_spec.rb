@@ -309,5 +309,3 @@ describe Rufus::TrackingScheduler do
     end
   end
 end
-
-

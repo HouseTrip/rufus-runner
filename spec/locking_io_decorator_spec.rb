@@ -1,8 +1,8 @@
 require 'spec_helper'
 
-describe 'stdout' do
+describe '$stdout' do
 
-  it 'should be a locking io' do
+  it 'is a locking io' do
     $stdout.should be_a(Rufus::LockingIODecorator)
   end
 
@@ -81,7 +81,7 @@ describe Rufus::LockingIODecorator::Guard do
       subject.send(:lock_file).object_id.should_not == object_id
     end
 
-    it 'users a shared lock file across child processes' do
+    it 'uses a shared lock file across child processes' do
       subject
       path = get_from_other_process do |pipe|
         fork do
