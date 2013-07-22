@@ -34,6 +34,7 @@ Gem::Specification.new do |gem|
     lib/rufus-runner.rb
     lib/rufus-runner/tracking_scheduler.rb
     lib/rufus-runner/tracking_scheduler/job_runner.rb
+    lib/rufus-runner/tracking_scheduler/threading_job_runner.rb
     lib/rufus-runner/tracking_scheduler/forking_job_runner.rb
     lib/rufus-runner/version.rb
     rufus-runner.gemspec
