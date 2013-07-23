@@ -14,7 +14,7 @@ Gem::Specification.new do |gem|
   gem.homepage      = "http://github.com/mezis/rufus-runner"
 
   gem.add_runtime_dependency 'eventmachine'
-  gem.add_runtime_dependency 'rufus-scheduler', '~> 2'
+  gem.add_runtime_dependency 'rufus-scheduler', '>= 2.0.22'
 
   gem.add_development_dependency 'rake'
   gem.add_development_dependency 'rspec', '~> 2'
@@ -25,15 +25,17 @@ Gem::Specification.new do |gem|
   gem.add_development_dependency 'terminal-notifier-guard'
   gem.add_development_dependency 'pry'
   gem.add_development_dependency 'pry-nav'
+  gem.add_development_dependency 'rspec-instafail'
 
   gem.files = %w(
     LICENSE.txt
     README.md
     bin/rufus-runner
-    lib/pathname_ext/delete_if_exist.rb
-    lib/pathname_ext/timestamp.rb
     lib/rufus-runner.rb
     lib/rufus-runner/tracking_scheduler.rb
+    lib/rufus-runner/tracking_scheduler/job_runner.rb
+    lib/rufus-runner/tracking_scheduler/threading_job_runner.rb
+    lib/rufus-runner/tracking_scheduler/forking_job_runner.rb
     lib/rufus-runner/version.rb
     rufus-runner.gemspec
   )
