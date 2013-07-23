@@ -167,6 +167,13 @@ describe Rufus::TrackingScheduler do
             wait_for_file(pid_job_3).should be_false
           end
 
+          it 'logs timeouts' do
+            wait_for_file(pid_job_3)
+            pid_job_1.delete
+            wait_for_file(pid_job_1)
+            scheduler_output.should =~ /job_3.*failed.*TimeOutError/
+          end
+
           it 'logs jobs starting and ending' do
             wait_for_file(pid_job_2)
             scheduler_output.should =~ /job_1.*starting/
