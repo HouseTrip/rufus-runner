@@ -45,16 +45,16 @@ describe Rufus::LockingIODecorator::Guard do
     it 'locks and unlocks a lock file' do
       subject.stub(:lock_file => lock_file)
       reached = false
-      lock_file.should_receive(:flock).with(File::LOCK_EX)
+      lock_file.should_receive(:flock).with(File::LOCK_EX) # should acquire exclusive lock
       subject.sync do
         reached = true
-        lock_file.should_receive(:flock).with(File::LOCK_UN)
+        lock_file.should_receive(:flock).with(File::LOCK_UN) # should release lock
       end
       reached.should be_true
     end
 
     it 'releases locks on errors' do
-      lock_file.should_receive(:flock).with(File::LOCK_UN)
+      lock_file.should_receive(:flock).with(File::LOCK_UN) # should release lock
       lambda do
         subject.sync do
           raise "error"
