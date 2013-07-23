@@ -1,5 +1,10 @@
+class Rufus::TrackingScheduler
+end
+
 require 'rufus/scheduler'
 require 'eventmachine'
+require 'rufus-runner/tracking_scheduler/threading_job_runner'
+require 'rufus-runner/tracking_scheduler/forking_job_runner'
 
 #
 # Wraps Rufus's scheduler class with signal handling,
@@ -17,38 +22,28 @@ class Rufus::TrackingScheduler
 
   def run(options={}, &block)
     return unless rails_environment_matches?(options.delete(:environments))
+    options = options.merge(@options)
 
-    name  = options.delete(:name) || 'noname'
-    if frequency = options.delete(:every)
-      scheduling_method = :every
-    elsif frequency = options.delete(:cron)
-      scheduling_method = :cron
+    name = options.delete(:name) || 'noname'
+    case options.delete(:fork) || :thread
+    when :thread
+      job_runner_class = ThreadingJobRunner
+    when :process
+      job_runner_class = ForkingJobRunner
     else
-      raise ArgumentError.new('You need to specify either :every or :cron')
+      fail ArgumentError.new("option :fork needs to be either :thread or :process")
     end
 
-    @scheduler.send(scheduling_method, frequency, @options.merge(options)) do |job|
-      job_id = '%08x' % job.job_id.gsub(/\D/,'')
-      start_time = Time.now
-      log("#{name}(#{job_id}): starting")
-
-      begin
-        block.call
-      rescue Exception => exception
-        log("#{name}(#{job_id}): failed with #{exception.class.name} (#{exception.message})")
-        if exception.kind_of? ActiveRecord::ConnectionTimeoutError
-          log("connection broken, exiting scheduler")
-          exit 0
-        end
-      else
-        total_time = Time.now - start_time
-        log("#{name}(#{job_id}): completed in %.3f s" % total_time)
-      end
-      
-      if defined?(ActiveRecord::Base)
-        ActiveRecord::Base.clear_active_connections!
-      end
+    schedule(options) do |job|
+      job_runner = job_runner_class.new(
+        :name => name,
+        :job => job,
+        :block => block,
+        :scheduler => self
+      )
+      job_runner.run
     end
+
     log("scheduled '#{name}'")
     nil
   end
@@ -61,7 +56,33 @@ class Rufus::TrackingScheduler
     end
   end
 
+  def shutting_down!
+    @shutting_down = true
+  end
+
+  def shutting_down?
+    !!@shutting_down
+  end
+
+
+  def log(string)
+    $stdout.puts "[#{$PROGRAM_NAME} #{format_time Time.now}] #{string}"
+    $stdout.flush
+  end
+
   private
+
+  def schedule(options, &block)
+    if frequency = options.delete(:every)
+      scheduling_method = :every
+    elsif frequency = options.delete(:cron)
+      scheduling_method = :cron
+    else
+      raise ArgumentError.new('You need to specify either :every or :cron')
+    end
+
+    @scheduler.send(scheduling_method, frequency, options, &block)
+  end
 
   def setup_traps
     %w(INT TERM).each do |signal|
@@ -74,6 +95,7 @@ class Rufus::TrackingScheduler
   end
 
   def stop_all_jobs
+    shutting_down!
     @scheduler.jobs.each_pair do |job_id, job|
       job.unschedule
     end
@@ -91,6 +113,7 @@ class Rufus::TrackingScheduler
 
     if running_jobs_count > 0
       log "#{running_jobs_count} jobs did not complete"
+      @scheduler.running_jobs.collect(&:job_runner).each(&:shutdown)
     else
       log "all jobs completed"
     end
@@ -98,11 +121,6 @@ class Rufus::TrackingScheduler
 
   def running_jobs_count
     @scheduler.running_jobs.length
-  end
-
-  def log(string)
-    $stdout.puts "[#{$PROGRAM_NAME} #{format_time Time.now}] #{string}"
-    $stdout.flush
   end
 
   def format_time(time)
@@ -128,6 +146,7 @@ class Rufus::TrackingScheduler
   end
 
   DefaultOptions = {
+    :fork              => :process,  # safety first
     :mutex             => Mutex.new, # because Rails is not thread-safe
     :timeout           => 60,        # we don't want no long-running jobs, they should be DJ'd (seconds)
     :discard_past      => true,      # don't catch up with past jobs

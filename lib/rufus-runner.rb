@@ -1,4 +1,7 @@
 require "rufus-runner/version"
 require "rufus-runner/tracking_scheduler"
-require "pathname_ext/delete_if_exist"
-require "pathname_ext/timestamp"
+require "rufus-runner/locking_io_decorator"
+
+unless $stdout.is_a?(Rufus::LockingIODecorator)
+  $stdout = Rufus::LockingIODecorator.new($stdout)
+end

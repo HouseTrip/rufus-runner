@@ -5,12 +5,16 @@
 #
 # See http://rubydoc.info/gems/rspec-core/RSpec/Core/Configuration
 
+require 'rufus-runner'
+require 'spec/support'
+
 module ScheduleHelper
   TEST_SCHEDULE = Pathname.new('tmp/schedule.rb')
   CHILD_OUTPUT  = Pathname.new('tmp/stdout')
 
   def create_schedule(string)
     TEST_SCHEDULE.open('w') do |io|
+      io.puts 'require "spec/support"'
       io.write string
     end
   end
@@ -49,7 +53,8 @@ module ScheduleHelper
 
   def end_schedule
     return unless @schedule_pid
-    Process.kill('KILL', @schedule_pid)
+    # dont send KILL, otherwise the child processes will survive
+    Process.kill('TERM', @schedule_pid)
     Process.wait(@schedule_pid)
     @schedule_pid = nil
   end
@@ -78,6 +83,45 @@ module FileExpectationsHelper
   end
 end
 
+module ProcessHelper
+  class CrossProcessReturn
+    def initialize
+      @reader, @writer = IO.pipe
+    end
+
+    def capture
+      yield(self)
+      @writer.close
+      result = Marshal.load(@reader.read) rescue nil
+      @reader.close
+      result
+    end
+
+    def return(value)
+      @writer.print(Marshal.dump(value)) rescue nil
+      @writer.close
+    end
+  end
+
+  def get_from_other_process(&block)
+    CrossProcessReturn.new.capture(&block)
+  end
+
+  def process_running?(pid)
+    status = Process.getpgid(pid)
+    true
+  rescue Errno::ESRCH
+    false
+  end
+
+  def wait_for_child_processes
+    loop do
+      Process.wait(-1) # wait for any child
+    end
+  rescue Errno::ECHILD
+  end
+end
+
 
 RSpec.configure do |config|
   config.treat_symbols_as_metadata_keys_with_true_values = true
@@ -92,6 +136,7 @@ RSpec.configure do |config|
 
   config.include ScheduleHelper
   config.include FileExpectationsHelper
+  config.include ProcessHelper
 
   config.after(:each) { end_schedule }
   config.after(:each) { remove_schedule }
