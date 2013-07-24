@@ -22,7 +22,7 @@ class Rufus::TrackingScheduler
 
   def run(options={}, &block)
     return unless rails_environment_matches?(options.delete(:environments))
-    options = options.merge(@options)
+    options = @options.merge(options)
 
     name = options.delete(:name) || 'noname'
     case options.delete(:fork) || :thread

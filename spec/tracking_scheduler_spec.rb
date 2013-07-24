@@ -307,5 +307,23 @@ describe Rufus::TrackingScheduler do
       subject.scheduler.stub(:every).and_yield(double('job'))
       subject.run(:fork => :thread, :every => 'period')
     end
+
+    it 'allows to set global options' do
+      tracking_scheduler = subject.class.new(:timeout => 50)
+      tracking_scheduler.scheduler.should_receive(:every).with(
+        'period',
+        hash_including(:timeout => 50)
+      )
+      tracking_scheduler.run(:every => 'period')
+    end
+
+    it 'allows to override options' do
+      tracking_scheduler = subject.class.new(:timeout => 50)
+      tracking_scheduler.scheduler.should_receive(:every).with(
+        'period',
+        hash_including(:timeout => 40)
+      )
+      tracking_scheduler.run(:every => 'period', :timeout => 40)
+    end
   end
 end
