@@ -14,6 +14,7 @@ class Rufus::TrackingScheduler::ForkingJobRunner < Rufus::TrackingScheduler::Job
     end
   rescue Rufus::Scheduler::TimeOutError
     kill
+    raise
   end
 
   def shutdown
