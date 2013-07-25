@@ -1,6 +1,6 @@
 # rufus-runner
 
-Wraps [rufus-scheduled](http://github.com/jmettraux/rufus-scheduler) in a
+Wraps [rufus-scheduler](http://github.com/jmettraux/rufus-scheduler) in a
 standalone process, with job timing, loggin, and safe defaults.
 
 
