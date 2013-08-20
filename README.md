@@ -28,10 +28,12 @@ Create a configuration file:
 The `#run` method simply takes the same options as Rufus's `#every` method,
 with these safe defaults:
 
-    :mutex             => Mutex.new # because Rails is not thread-safe
+    :mutex             => <m>       # because Rails is not thread-safe
     :timeout           => 60        # we don't want no long-running jobs, they should be DJ'd (seconds)
     :discard_past      => true      # don't catch up with past jobs
     :allow_overlapping => false     # don't try to run the same job twice simultaneously
+
+Where `<m>` is a shared, global instance of `Mutex`.
 
 Finally, run it:
 
