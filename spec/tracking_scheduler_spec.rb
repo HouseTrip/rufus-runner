@@ -138,7 +138,7 @@ describe Rufus::TrackingScheduler do
             run_schedule
             wait_for_file SCHEDULER_PID_FILE or raise
           end
-      
+
           it 'runs jobs' do
             wait_for_file(SCHEDULER_PID_FILE).should be_true
           end
