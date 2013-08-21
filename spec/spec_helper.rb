@@ -5,8 +5,10 @@
 #
 # See http://rubydoc.info/gems/rspec-core/RSpec/Core/Configuration
 
+$:.unshift(File.dirname(__FILE__))
+
 require 'rufus-runner'
-require 'spec/support'
+require 'support'
 
 module ScheduleHelper
   TEST_SCHEDULE = Pathname.new('tmp/schedule.rb')
@@ -14,7 +16,7 @@ module ScheduleHelper
 
   def create_schedule(string)
     TEST_SCHEDULE.open('w') do |io|
-      io.puts 'require "spec/support"'
+      io.puts 'require "./spec/support"'
       io.write string
     end
   end
@@ -70,7 +72,7 @@ module FileExpectationsHelper
     1.upto(100) do
       return true if pathname.exist?
       Kernel.sleep(100e-3)
-    end 
+    end
     return false
   end
 
