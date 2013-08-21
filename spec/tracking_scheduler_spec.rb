@@ -138,7 +138,7 @@ describe Rufus::TrackingScheduler do
             run_schedule
             wait_for_file SCHEDULER_PID_FILE or raise
           end
-      
+
           it 'runs jobs' do
             wait_for_file(SCHEDULER_PID_FILE).should be_true
           end
@@ -225,11 +225,11 @@ describe Rufus::TrackingScheduler do
 
         def with_environment(env, &block)
           begin
-            old_env = ENV['RAILS_ENV']
-            ENV['RAILS_ENV'] = env
+            old_env = ENV['RAILS_ENV'] || ENV['RACK_ENV']
+            ENV['RAILS_ENV'] = ENV['RACK_ENV'] = env
             yield
           ensure
-            ENV['RAILS_ENV'] = old_env
+            ENV['RAILS_ENV'] = ENV['RACK_ENV'] = old_env
           end
         end
 
