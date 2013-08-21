@@ -15,4 +15,4 @@ if ARGV.empty?
   Process.exit! 1
 end
 
-require ARGV[0]
+load File.expand_path(ARGV[0])
