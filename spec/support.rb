@@ -1,4 +1,4 @@
 Dir.glob('spec/support/**/*.rb').each do |file|
-  require file
+  require "./#{file}"
 end
 
