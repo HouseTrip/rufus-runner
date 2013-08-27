@@ -39,9 +39,9 @@ module ScheduleHelper
 
   def wait_schedule
     raise 'not started' unless @schedule_pid
-    result = Process.waitpid2(@schedule_pid).last.to_i
+    status = Process.waitpid2(@schedule_pid).last
     @schedule_pid = nil
-    result
+    status.exitstatus
   end
 
   def end_schedule
