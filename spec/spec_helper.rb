@@ -5,16 +5,23 @@
 #
 # See http://rubydoc.info/gems/rspec-core/RSpec/Core/Configuration
 
+dir = File.expand_path(File.join(__FILE__, '../..'))
+$:.unshift(dir) unless $:.include?(dir)
+
 require 'rufus-runner'
 require 'spec/support'
 
 module ScheduleHelper
-  TEST_SCHEDULE = Pathname.new('tmp/schedule.rb')
-  CHILD_OUTPUT  = Pathname.new('tmp/stdout')
+  TEST_SCHEDULE = Pathname.new('tmp/schedule.rb').expand_path
+  CHILD_OUTPUT  = Pathname.new('tmp/stdout').expand_path
 
   def create_schedule(string)
     TEST_SCHEDULE.open('w') do |io|
-      io.puts 'require "spec/support"'
+      io.puts %{
+        dir = File.expand_path(File.join(__FILE__, '../..'))
+        $:.unshift(dir) unless $:.include?(dir)
+        require "spec/support"
+      }
       io.write string
     end
   end
