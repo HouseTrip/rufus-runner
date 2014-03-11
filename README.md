@@ -3,7 +3,7 @@
 [![Build Status](https://travis-ci.org/HouseTrip/rufus-runner.png)](https://travis-ci.org/HouseTrip/rufus-runner)
 
 Wraps [rufus-scheduler](http://github.com/jmettraux/rufus-scheduler) in a
-standalone process, with job timing, loggin, and safe defaults.
+standalone process, with job timing, logging, and safe defaults.
 
 
 ## Installation
