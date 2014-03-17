@@ -88,8 +88,12 @@ class Rufus::TrackingScheduler
     %w(INT TERM).each do |signal|
       Signal.trap(signal) do
         log "SIG#{signal} received"
-        stop_all_jobs
-        EM.stop_event_loop
+        # EM uses mutexes, which cannot be used in the context of a trap.
+        # Just do the cleanup in a thread
+        Thread.new {
+          stop_all_jobs
+          EM.stop_event_loop
+        }.join
       end
     end
   end
