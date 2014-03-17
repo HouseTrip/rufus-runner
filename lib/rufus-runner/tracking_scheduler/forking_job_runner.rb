@@ -7,6 +7,7 @@ class Rufus::TrackingScheduler::ForkingJobRunner < Rufus::TrackingScheduler::Job
   def run_block
     @pid = fork do
       @block.call
+      exit 0
     end
     status = Process.wait2(@pid)[1]
     unless status.success?
