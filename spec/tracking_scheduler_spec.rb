@@ -111,7 +111,8 @@ describe Rufus::TrackingScheduler do
 
     it 'names the child process with the job name' do
       wait_for_file(pid_job).should be_true
-      %x(ps).should =~ /rufus: job_foo/
+      # ps -f is good enough to surface this both under Darwin and Linux
+      %x(ps -f).should =~ /rufus: job_foo/
     end
   end
 
