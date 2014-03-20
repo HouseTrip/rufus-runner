@@ -89,6 +89,34 @@ describe Rufus::TrackingScheduler do
     it_should_behave_like 'killable'
   end
 
+  context '(using the process fork strategy)' do
+    let(:pid_job) { PID_DIR.join("job_foo") }
+
+    before do
+      create_schedule <<-RUBY
+        Rufus::TrackingScheduler.start(:timeout => 10, :fork => :process) do |scheduler|
+          scheduler.run :name => 'job_foo', :every => '1s' do
+            Pathname.write_pid('#{pid_job}')
+            Kernel.sleep 600
+            Pathname.write_pid('#{pid_job}')
+          end
+
+          #{CREATE_PID_WHEN_EM_STARTED}
+        end
+      RUBY
+      
+      run_schedule
+      wait_for_file SCHEDULER_PID_FILE or raise
+    end
+
+    it 'names the child process with the job name' do
+      wait_for_file(pid_job).should be_true
+      # ps -f is good enough to surface this both under Darwin and Linux
+      %x(ps -f).should =~ /rufus: job_foo/
+    end
+  end
+
+
   [:process, :thread].each do |fork_strategy|
     context "(using the :#{fork_strategy} fork strategy)" do
 
@@ -96,21 +124,19 @@ describe Rufus::TrackingScheduler do
         let(:pid_job_1) { PID_DIR.join("job1") }
         let(:pid_job_2) { PID_DIR.join("job2") }
         let(:pid_job_3) { PID_DIR.join("job3") }
+        let(:pid_job_4) { PID_DIR.join("job4") }
 
-        before do |x|
+        before do
           create_schedule <<-RUBY
             Rufus::TrackingScheduler.start(:timeout => 4, :fork => #{fork_strategy.inspect}) do |scheduler|
               scheduler.run :name => 'job_1', :every => '1s' do
                 Pathname.write_pid('#{pid_job_1}')
               end
 
-              scheduler.run :name => 'job_4', :every => '1s' do
-                raise RuntimeError, 'fubar'
-              end
-
               scheduler.run :name => 'job_2', :every => '1s' do
                 Pathname.write_pid('#{pid_job_2}')
                 Kernel.sleep 2
+
                 Pathname.write_pid('#{pid_job_2}')
               end
 
@@ -118,6 +144,10 @@ describe Rufus::TrackingScheduler do
                 Pathname.write_pid('#{pid_job_3}')
                 Kernel.sleep 20
                 Pathname.write_pid('#{pid_job_3}')
+              end
+
+              scheduler.run :name => 'job_4', :every => '1s' do
+                raise RuntimeError, 'fubar'
               end
 
               #{CREATE_PID_WHEN_EM_STARTED}
@@ -133,7 +163,7 @@ describe Rufus::TrackingScheduler do
           it_should_behave_like 'killable'
         end
 
-        context '(considering job order)' do
+        describe '(runtime and parallelism)' do
           before do
             run_schedule
             wait_for_file SCHEDULER_PID_FILE or raise
@@ -181,7 +211,8 @@ describe Rufus::TrackingScheduler do
           end
 
           it 'logs jobs failing' do
-            wait_for_file(pid_job_2)
+            wait_for_file(pid_job_4)
+            sleep 1 # time for killing/logging to happen
             scheduler_output.should =~ /job_4.*starting/
             scheduler_output.should =~ /job_4.*failed/
           end

@@ -67,9 +67,9 @@ end
 
 module FileExpectationsHelper
   def wait_for_file(pathname)
-    1.upto(100) do
+    1.upto(500) do
       return true if pathname.exist?
-      Kernel.sleep(100e-3)
+      Kernel.sleep(20e-3)
     end
     return false
   end
