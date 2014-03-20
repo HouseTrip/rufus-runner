@@ -6,6 +6,7 @@ class Rufus::TrackingScheduler::ForkingJobRunner < Rufus::TrackingScheduler::Job
 
   def run_block
     @pid = fork do
+      $PROGRAM_NAME = "rufus: #{@name}"
       @block.call
       exit 0
     end

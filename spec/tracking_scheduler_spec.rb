@@ -89,6 +89,33 @@ describe Rufus::TrackingScheduler do
     it_should_behave_like 'killable'
   end
 
+  context '(using the process fork strategy)' do
+    let(:pid_job) { PID_DIR.join("job_foo") }
+
+    before do
+      create_schedule <<-RUBY
+        Rufus::TrackingScheduler.start(:timeout => 10, :fork => :process) do |scheduler|
+          scheduler.run :name => 'job_foo', :every => '1s' do
+            Pathname.write_pid('#{pid_job}')
+            Kernel.sleep 600
+            Pathname.write_pid('#{pid_job}')
+          end
+
+          #{CREATE_PID_WHEN_EM_STARTED}
+        end
+      RUBY
+      
+      run_schedule
+      wait_for_file SCHEDULER_PID_FILE or raise
+    end
+
+    it 'names the child process with the job name' do
+      wait_for_file(pid_job).should be_true
+      %x(ps).should =~ /rufus: job_foo/
+    end
+  end
+
+
   [:process, :thread].each do |fork_strategy|
     context "(using the :#{fork_strategy} fork strategy)" do
 
@@ -98,7 +125,7 @@ describe Rufus::TrackingScheduler do
         let(:pid_job_3) { PID_DIR.join("job3") }
         let(:pid_job_4) { PID_DIR.join("job4") }
 
-        before do |x|
+        before do
           create_schedule <<-RUBY
             Rufus::TrackingScheduler.start(:timeout => 4, :fork => #{fork_strategy.inspect}) do |scheduler|
               scheduler.run :name => 'job_1', :every => '1s' do
