@@ -66,7 +66,7 @@ class Rufus::TrackingScheduler
 
 
   def log(string)
-    $stdout.puts "[#{$PROGRAM_NAME} #{format_time Time.now}] #{string}"
+    $stdout.write "[#{$PROGRAM_NAME} #{format_time Time.now}] #{string}\n"
     $stdout.flush
   end
 
